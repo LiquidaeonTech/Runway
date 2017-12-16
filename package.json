@@ -1,0 +1,11 @@
+{
+  "name": "runway",
+  "version": "1.0.0",
+  "description": "",
+  "main": "truffle-config.js",
+  "dependencies": {
+    "zeppelin-solidity": "^1.4.0"
+  },
+  "author": "liquidaeontech",
+  "license": "MIT"
+}
