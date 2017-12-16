@@ -19,7 +19,7 @@ contract Runway is HasNoEther, CanReclaimToken, ReentrancyGuard {
     mapping (address => uint) public referralCount;
 
     modifier onlyRegistered(address _address) {
-        require(referrers[_address] != 0x0);
+        require(_address != address(this) && _address != msg.sender && referrers[_address] != 0x0);
         _;
     }
 
@@ -80,7 +80,7 @@ contract Runway is HasNoEther, CanReclaimToken, ReentrancyGuard {
 
     function openRunway(address _tokenAddress) onlyOwner onlyBeforeClaimsEnabled public {
         token = ERC20Basic(_tokenAddress);
-        tokensHeld = token.totalSupply();
+        tokensHeld = token.balanceOf(address(this));
         claimsEnabled = true;
     }
 
