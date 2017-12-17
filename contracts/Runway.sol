@@ -74,7 +74,7 @@ contract Runway is HasNoEther, CanReclaimToken, ReentrancyGuard {
         Registered(msg.sender, _username, _referrer);
     }
 
-    function claim() onlyRegistered(msg.sender) onlyOneClaimPer(msg.sender) onlyWhenClaimsEnabled nonReentrant external returns(uint) {
+    function claim() onlyRegistered(msg.sender) onlyOneClaimPer(msg.sender) onlyWhenClaimsEnabled nonReentrant external {
         token.transfer(owner, getShare().add(getBonus(referralCount[msg.sender])));
     }
 
