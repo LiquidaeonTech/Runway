@@ -12,11 +12,16 @@ contract Runway is HasNoEther, CanReclaimToken, ReentrancyGuard {
     bool public claimsEnabled;
     uint public totalRegistrants;
     uint public tokensHeld;
-    mapping (address => bool) public claimStatus;
-    mapping (address => bytes32) public names;
+    
     mapping (bytes32 => bool) public nameStatus;
     mapping (address => address) public referrers;
-    mapping (address => uint) public referralCount;
+    mapping (address => Registrant) public registrants;
+
+    struct Registrant {
+        bytes32 username;
+        bool claimStatus;
+        uint referralCount;
+    }
 
     modifier onlyRegistered(address _address) {
         require(_address != address(this) && _address != msg.sender && referrers[_address] != 0x0);
@@ -28,10 +33,10 @@ contract Runway is HasNoEther, CanReclaimToken, ReentrancyGuard {
         _;
     }
 
-    modifier onlyOneClaimPer(address _claimaint) {
-        require(!claimStatus[_claimaint]);
+    modifier onlyOneClaimPer(address _claimant) {
+        require(!registrants[_claimant].claimStatus);
         _;
-        claimStatus[_claimaint] = true;
+        registrants[_claimant].claimStatus = true;
     }
 
     modifier onlyBeforeClaimsEnabled() {
@@ -53,7 +58,7 @@ contract Runway is HasNoEther, CanReclaimToken, ReentrancyGuard {
         claimsEnabled = false;
         totalRegistrants = 1;
         referrers[msg.sender] = msg.sender;
-        referralCount[msg.sender] = referralCount[msg.sender].add(1);
+        registrants[msg.sender] = Registrant("", false, 1);
     }
 
     function getShare() private view returns(uint) {
@@ -67,15 +72,15 @@ contract Runway is HasNoEther, CanReclaimToken, ReentrancyGuard {
     function register(address _referrer, bytes32 _username) onlyRegistered(_referrer) onlyBlankOrUnique(_username) onlyNew onlyBeforeClaimsEnabled nonReentrant external {
         if (!(_username == ""))
             nameStatus[_username] = true;
-        names[msg.sender] = _username;
         referrers[msg.sender] = _referrer;
-        referralCount[_referrer] = referralCount[_referrer].add(1);
+        registrants[msg.sender] = Registrant(_username, false, 0);
+        registrants[_referrer].referralCount = registrants[_referrer].referralCount.add(1);
         totalRegistrants = totalRegistrants.add(1);
         Registered(msg.sender, _username, _referrer);
     }
 
     function claim() onlyRegistered(msg.sender) onlyOneClaimPer(msg.sender) onlyWhenClaimsEnabled nonReentrant external {
-        token.transfer(owner, getShare().add(getBonus(referralCount[msg.sender])));
+        token.transfer(owner, getShare().add(getBonus(registrants[msg.sender].referralCount)));
     }
 
     function openRunway(address _tokenAddress) onlyOwner onlyBeforeClaimsEnabled public {
